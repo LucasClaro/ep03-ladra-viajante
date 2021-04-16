@@ -18,6 +18,9 @@ class Item():
                 itens.append(Item(dado[0], dado[1], dado[2], dado[3], dado[4]))
             return itens
 
+    def __str__(self):
+        return f"{self.nome}"
+
 
 class Viagem():
 
