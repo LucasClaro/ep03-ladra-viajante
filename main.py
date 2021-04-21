@@ -1,6 +1,10 @@
 from Classes import Item, Viagem
 import random
 
+
+popQtd = 10 # 15 -> ruim # 20 -> ok até
+
+
 itens = Item.buscarDados()
 viagens = Viagem.buscarDados()
 
@@ -110,7 +114,6 @@ def mutar(individuo):
     if (len(individuo) == len(itens)):
         tipoMutacao = 4
 
-    # print(len(individuo), tipoMutacao)
 
     if tipoMutacao == 1:
         #Inserir um item novo no início
@@ -150,7 +153,7 @@ def mutar(individuo):
 
 def selecao(lista):
     nova_lista = sorted(lista, key=fitness, reverse=True)
-    return nova_lista[0:10]
+    return nova_lista[0:popQtd]
 
 def ehValido(individuo):
     if(len(individuo) == len(set(individuo))):
@@ -178,12 +181,6 @@ def comparaIndividuos(ind1,ind2):
     if(ind1 == None or ind2 == None):
         return False
     
-    # if(len(ind1) != len(ind2)):
-    #     return False
-    
-    # for i in range(len(ind1)):
-    #     if ind1[i].nome != ind2[i].nome:
-    #         return False
     #print(f"fit Maior: {fitness(maiorIndividuoGerecao)}; fit pop[0]: {fitness(populacao[0])}")
     if fitness(ind1) != fitness(ind2):
         return False
@@ -193,21 +190,22 @@ def comparaIndividuos(ind1,ind2):
 print('Iniciando...')
 random.seed()
 
-populacao = [faz_individuo_inicial() for _ in range(0,10)]
+populacao = [faz_individuo_inicial() for _ in range(0,popQtd)]
 
 geracoes = 0
-patience = 100 # paciencia de quantas populações sem mudar (copiamos direto do TensorFlow pra evitar Overfitting)
+maxGeracoes = 70000
+patience = 100 # paciencia de quantas populações sem mudar (vimos no TensorFlow pra evitar Overfitting, achos interessante de implementar aqui para agilizar)
 patienceCount = 0
 maiorIndividuoGerecao = None 
 
+# Looping principal
 while True:
     pop_mutada = [mutar(individuo) for individuo in populacao]
     pop_crossover = crossover(populacao, pop_mutada)
 
     populacao = selecao(populacao + pop_mutada + pop_crossover)
-    # populacao = selecao(populacao + pop_mutada)
     
-    # print(fitness(populacao[0]), patienceCount)
+    
     if comparaIndividuos(maiorIndividuoGerecao, populacao[0]):
         patienceCount += 1
     else:
@@ -215,14 +213,12 @@ while True:
         maiorIndividuoGerecao = populacao[0].copy()
     
     geracoes += 1
-    # if geracoes % 50 == 0:
-    #     print(''.join(populacao[0]), geracoes)
 
     if (geracoes % 1000 == 0):
         print(geracoes)
 
     # critério de parada
-    if geracoes == 70000 or patienceCount == patience:
+    if geracoes == maxGeracoes or patienceCount == patience:
         break
 
 print('Finalizado!')
@@ -236,15 +232,3 @@ for item in populacao[0]:
 print()
 
 fitnessComPrint(populacao[0])
-
-# individuo = faz_individuo_inicial()
-# for gene in individuo:
-#     print(f"Item: {gene.nome}")
-# print()
-# fitness(individuo)
-
-
-
-
-        
-    
