@@ -90,11 +90,18 @@ def fitnessComPrint(individuo):
     ValorGasto += int(dicionarioViagens[(roubo.cidade, "Escondidos")].preco) if (roubo.cidade, "Escondidos") in dicionarioViagens else int(dicionarioViagens[("Escondidos", roubo.cidade)].preco)
     TempoGasto += int(dicionarioViagens[(roubo.cidade, "Escondidos")].tempo) if (roubo.cidade, "Escondidos") in dicionarioViagens else int(dicionarioViagens[("Escondidos", roubo.cidade)].tempo)
 
-    print(f"Valor Gasto: {ValorGasto}\nTempoGasto: {TempoGasto}\nValor Roubado: {ValorRoubado}\nPeso Carregado: {PesoCarregado}")
+    pontos = 0
+    if (TempoGasto > 72):
+        pontos -= 10_000_000_000
+    if (PesoCarregado > 20):
+        pontos -= 10_000_000_000
+    pontos += ValorRoubado - ValorGasto
+
+    print(f"Valor Gasto: {ValorGasto}\nTempoGasto: {TempoGasto}\nValor Roubado: {ValorRoubado}\nValor Liquido: {pontos}\nPeso Carregado: {PesoCarregado}")
 
 
 def mutar(individuo):
-    valores = [1, 2, 3, 4]
+    valores = [1, 1, 2, 2, 2, 2, 2, 2, 3, 4]
     tipoMutacao = random.choice(valores)
 
     if (len(individuo) < 2):
@@ -145,15 +152,43 @@ def selecao(lista):
     nova_lista = sorted(lista, key=fitness, reverse=True)
     return nova_lista[0:10]
 
-# def crossover(populacao, mutada):
-#     populacao_crossover = []
-#     for ind1 in populacao:
-#         for ind2 in mutada:
-#             # geracao do cross_over
-#             i = random.randint(0, len(meta) - 1)
-#             populacao_crossover.append(ind1[0:i] + ind2[i:])
-#             populacao_crossover.append(ind2[0:i] + ind1[i:])
-#     return populacao_crossover
+def ehValido(individuo):
+    if(len(individuo) == len(set(individuo))):
+        return True
+    return False
+
+def crossover(populacao, mutada):
+    populacao_crossover = []
+    for ind1 in populacao:
+        for ind2 in mutada:
+            # geracao do cross_over
+            i = random.randint(0, min(len(ind1),len(ind2)) - 1)
+
+            cross = ind1[0:i] + ind2[i:]
+            over = ind2[0:i] + ind1[i:]
+
+            if (ehValido(cross)):
+                populacao_crossover.append(cross)
+            if (ehValido(over)):
+                populacao_crossover.append(over)
+    return populacao_crossover
+
+
+def comparaIndividuos(ind1,ind2):
+    if(ind1 == None or ind2 == None):
+        return False
+    
+    # if(len(ind1) != len(ind2)):
+    #     return False
+    
+    # for i in range(len(ind1)):
+    #     if ind1[i].nome != ind2[i].nome:
+    #         return False
+    #print(f"fit Maior: {fitness(maiorIndividuoGerecao)}; fit pop[0]: {fitness(populacao[0])}")
+    if fitness(ind1) != fitness(ind2):
+        return False
+    return True
+
 
 print('Iniciando...')
 random.seed()
@@ -161,22 +196,41 @@ random.seed()
 populacao = [faz_individuo_inicial() for _ in range(0,10)]
 
 geracoes = 0
+patience = 100 # paciencia de quantas populações sem mudar (copiamos direto do TensorFlow pra evitar Overfitting)
+patienceCount = 0
+maiorIndividuoGerecao = None 
+
 while True:
     pop_mutada = [mutar(individuo) for individuo in populacao]
-    # pop_crossover = crossover(populacao, pop_mutada)
+    pop_crossover = crossover(populacao, pop_mutada)
 
-    # populacao = selecao(populacao + pop_mutada + pop_crossover)
-    populacao = selecao(populacao + pop_mutada)
+    populacao = selecao(populacao + pop_mutada + pop_crossover)
+    # populacao = selecao(populacao + pop_mutada)
+    
+    # print(fitness(populacao[0]), patienceCount)
+    if comparaIndividuos(maiorIndividuoGerecao, populacao[0]):
+        patienceCount += 1
+    else:
+        patienceCount = 0
+        maiorIndividuoGerecao = populacao[0].copy()
     
     geracoes += 1
     # if geracoes % 50 == 0:
     #     print(''.join(populacao[0]), geracoes)
+
+    if (geracoes % 1000 == 0):
+        print(geracoes)
+
     # critério de parada
-    if geracoes == 1000:
+    if geracoes == 70000 or patienceCount == patience:
         break
+
 print('Finalizado!')
 
 populacao = sorted(populacao, key=fitness, reverse=True)
+
+print()
+print(f"Gerações: {geracoes}")
 for item in populacao[0]:
     print(item)
 print()
