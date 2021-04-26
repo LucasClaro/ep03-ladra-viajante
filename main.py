@@ -2,7 +2,7 @@ from Classes import Item, Viagem
 import random
 
 
-popQtd = 10 # 15 -> ruim # 20 -> ok até
+popQtd = 10 # 15 -> ruim # 20 -> ok até # 40 -> ou bom ou ruim
 
 
 itens = Item.buscarDados()
